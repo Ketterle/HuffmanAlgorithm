@@ -1,29 +1,46 @@
 package huffman.metrics;
 
+import huffman.huffmanencoding.HuffmanEncoding;
+import huffman.texttools.TextTools;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class HuffmanEfficiency {
-    /**
-     * Calculates the entropy of a Huffman map.
-     *
-     * @param huffmanMap The Huffman map as a list of Map.Entry objects, where the key represents the character
-     *                   and the value represents its frequency.
-     * @return The calculated entropy value.
-     */
-    public static double entropyHuffmanCalculator(List<Map.Entry<String, Integer>> huffmanMap) {
-        AtomicReference<Double> entropy = new AtomicReference<>((double) 0);
 
-        // Calculate the total number of characters in the Huffman map
-        int numOfChars = huffmanMap.stream().mapToInt(Map.Entry::getValue).sum();
+    // Method to calculate the entropy of a given message
+    public static double entropyMessageCalculator(String message) {
+        List<Map.Entry<String, Integer>> charactersMap = TextTools.charactersFrequencyMap(message);
+        double entropy = 0;
 
-        // Calculate the entropy using the given Huffman map
-        huffmanMap.forEach(entry -> {
+        // Calculate the total number of characters in the message
+        int numOfChars = charactersMap.stream().mapToInt(Map.Entry::getValue).sum();
+
+        // Calculate the entropy using the given message
+        for (Map.Entry<String, Integer> entry : charactersMap) {
             double probability = (double) entry.getValue() / numOfChars;
-            entropy.updateAndGet(v -> v - probability * Math.log(probability));
-        });
+            entropy -= probability * Math.log(probability) / Math.log(2); // Using base-2 logarithm
+        }
+        return entropy;
+    }
 
-        return entropy.get();
+    // Method to calculate the average bits per symbol after Huffman encoding
+    public static double huffmanEncodingAverageBits(String message) {
+        Map<Character, String> huffmanCodeMap = HuffmanEncoding.huffmanCode(message);
+        List<Character> distinctCharacters = TextTools.distinctCharactersInString(message);
+
+        double averageBits = 0.0;
+        int totalCharacters = message.length();
+
+        for (Character c : distinctCharacters) {
+            String huffmanCode = huffmanCodeMap.get(c);
+            int characterFrequency = Collections.frequency(message.chars().mapToObj(ch -> (char) ch).toList(), c);
+            double characterProbability = (double) characterFrequency / totalCharacters;
+            double bits = characterProbability * huffmanCode.length();
+            averageBits += bits;
+        }
+
+        return averageBits;
     }
 }

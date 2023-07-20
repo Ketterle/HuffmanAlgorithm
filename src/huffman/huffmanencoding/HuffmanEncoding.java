@@ -1,83 +1,51 @@
 package huffman.huffmanencoding;
 
-import huffman.TextTools;
+import huffman.texttools.TextTools;
 
 import java.util.*;
 
 public class HuffmanEncoding {
-    /**
-     * Builds the Huffman code map for a given input string.
-     *
-     * @param inputString The input string to build the Huffman code map for.
-     * @return The generated Huffman code map.
-     */
-    public static Map<String, String> buildHuffmanCodeMap(String inputString) {
-        List<Map.Entry<String, Integer>> frequencyMap = TextTools.charactersFrequencyMap(inputString);
-        PriorityQueue<HuffmanNode> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(HuffmanNode::getFrequency));
 
-        // Create initial Huffman nodes for each character and add them to the priority queue
-        for (Map.Entry<String, Integer> entry : frequencyMap) {
-            HuffmanNode node = new HuffmanNode(entry.getKey(), entry.getValue());
-            priorityQueue.add(node);
-        }
+    // Method to generate Huffman codes for characters in a given string
+    public static Map<Character, String> huffmanCode(String s) {
+        List<List<Map.Entry<String, Integer>>> mergedCharacters = TextTools.mergeCharacters(s);
+        Collections.reverse(mergedCharacters);
+        List<Character> distinctCharacters = TextTools.distinctCharactersInString(s);
+        Map<Character, String> mapToBeReturned = new HashMap<>();
 
-        // Build the Huffman tree by repeatedly merging nodes until only one node remains
-        while (priorityQueue.size() > 1) {
-            HuffmanNode firstNode = priorityQueue.poll();
-            HuffmanNode secondNode = priorityQueue.poll();
+        for (Character c : distinctCharacters) {
+            StringBuilder value = new StringBuilder();
 
-            assert secondNode != null;
-            HuffmanNode mergedNode = new HuffmanNode(firstNode, secondNode);
-            priorityQueue.add(mergedNode);
-        }
-
-        // Obtain the root node of the Huffman tree
-        HuffmanNode rootNode = priorityQueue.poll();
-
-        // Generate the Huffman codes by traversing the Huffman tree
-        Map<String, String> huffmanCodeMap = new HashMap<>();
-        assert rootNode != null;
-        generateHuffmanCodes(rootNode, "", huffmanCodeMap);
-
-        return huffmanCodeMap;
-    }
-
-    /**
-     * Encodes a string using the given Huffman code map.
-     *
-     * @param inputString    The input string to be encoded.
-     * @param huffmanCodeMap The Huffman code map.
-     * @return The encoded string.
-     */
-    public static String encodeStringWithHuffman(String inputString, Map<String, String> huffmanCodeMap) {
-        StringBuilder encodedString = new StringBuilder();
-
-        for (int i = 0; i < inputString.length(); i++) {
-            String character = String.valueOf(inputString.charAt(i));
-
-            if (huffmanCodeMap.containsKey(character)) {
-                encodedString.append(huffmanCodeMap.get(character));
+            // Handling the special case where there is only one distinct character in the string
+            if (distinctCharacters.size() == 1) {
+                value.append("1");
+            } else {
+                // Iterate over the merged characters to create the Huffman code
+                for (List<Map.Entry<String, Integer>> list : mergedCharacters) {
+                    if (list.size() == 1) {
+                        continue;
+                    } else if (list.get(0).getKey().contains(c.toString())) {
+                        value.append("0");
+                    } else if (list.get(1).getKey().contains(c.toString())) {
+                        value.append("1");
+                    }
+                }
             }
-            // Ignore the character if it is not found in the Huffman code map
+            // Store the Huffman code for the character in the map
+            mapToBeReturned.put(c, value.toString());
+        }
+        return mapToBeReturned;
+    }
+    public static String encodeMessage(String message) {
+        Map<Character, String> huffmanCodeMap = huffmanCode(message);
+        StringBuilder encodedMessage = new StringBuilder();
+
+        for (char c : message.toCharArray()) {
+            String huffmanSymbol = huffmanCodeMap.get(c);
+            encodedMessage.append(huffmanSymbol);
         }
 
-        return encodedString.toString();
+        return encodedMessage.toString();
     }
 
-    /**
-     * Recursively generates the Huffman codes for each character in the Huffman tree.
-     *
-     * @param node           The current node in the Huffman tree.
-     * @param code           The Huffman code built so far.
-     * @param huffmanCodeMap The map to store the generated Huffman codes.
-     */
-    private static void generateHuffmanCodes(HuffmanNode node, String code, Map<String, String> huffmanCodeMap) {
-        if (node.isLeaf()) {
-            huffmanCodeMap.put(node.getCharacter(), code);
-            return;
-        }
-
-        generateHuffmanCodes(node.getLeftChild(), code + "0", huffmanCodeMap);
-        generateHuffmanCodes(node.getRightChild(), code + "1", huffmanCodeMap);
-    }
 }
