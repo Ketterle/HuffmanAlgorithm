@@ -36,6 +36,8 @@ public class HuffmanEncoding {
         }
         return mapToBeReturned;
     }
+
+    // Encodes message given the Huffman map
     public static String encodeMessage(String message) {
         Map<Character, String> huffmanCodeMap = huffmanCode(message);
         StringBuilder encodedMessage = new StringBuilder();
